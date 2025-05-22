@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-platform-frontend
+  labels:
+    app: ai-platform
+    component: frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ai-platform
+      component: frontend
+  template:
+    metadata:
+      labels:
+        app: ai-platform
+        component: frontend
+    spec:
+      containers:
+      - name: frontend
+        image: ${ACR_NAME}.azurecr.io/ai-platform/frontend:latest
+        imagePullPolicy: Always
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+        ports:
+        - containerPort: 3000
+        env:
+        - name: NEXT_PUBLIC_API_URL
+          value: "https://api.ai-platform.example.com"
+        - name: NEXT_PUBLIC_AZURE_AD_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: ai-platform-secrets
+              key: azure-ad-client-id
+        - name: NEXT_PUBLIC_AZURE_AD_TENANT_ID
+          valueFrom:
+            secretKeyRef:
+              name: ai-platform-secrets
+              key: azure-ad-tenant-id
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      imagePullSecrets:
+      - name: acr-auth 

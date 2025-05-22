@@ -1,0 +1,91 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-platform-backend
+  labels:
+    app: ai-platform
+    component: backend
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: ai-platform
+      component: backend
+  template:
+    metadata:
+      labels:
+        app: ai-platform
+        component: backend
+    spec:
+      containers:
+      - name: backend
+        image: ${ACR_NAME}.azurecr.io/ai-platform/backend:latest
+        imagePullPolicy: Always
+        resources:
+          requests:
+            cpu: "200m"
+            memory: "256Mi"
+          limits:
+            cpu: "1000m"
+            memory: "1Gi"
+        ports:
+        - containerPort: 8000
+        env:
+        - name: MONGODB_URI
+          valueFrom:
+            secretKeyRef:
+              name: ai-platform-secrets
+              key: mongodb-uri
+        - name: AZURE_OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: ai-platform-secrets
+              key: openai-api-key
+        - name: AZURE_OPENAI_API_BASE
+          valueFrom:
+            secretKeyRef:
+              name: ai-platform-secrets
+              key: openai-api-base
+        - name: AZURE_OPENAI_DEPLOYMENT_NAME
+          valueFrom:
+            secretKeyRef:
+              name: ai-platform-secrets
+              key: openai-deployment-name
+        - name: AZURE_AD_TENANT_ID
+          valueFrom:
+            secretKeyRef:
+              name: ai-platform-secrets
+              key: azure-ad-tenant-id
+        - name: AZURE_AD_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: ai-platform-secrets
+              key: azure-ad-client-id
+        - name: AZURE_AD_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: ai-platform-secrets
+              key: azure-ad-client-secret
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: ai-platform-secrets
+              key: secret-key
+        - name: REDIS_HOST
+          value: "ai-platform-redis"
+        - name: VECTOR_DB_URL
+          value: "http://ai-platform-qdrant:6333"
+        livenessProbe:
+          httpGet:
+            path: /api/v1/health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /api/v1/health
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      imagePullSecrets:
+      - name: acr-auth 
