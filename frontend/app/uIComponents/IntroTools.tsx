@@ -24,9 +24,9 @@ const tools = [
   },
   {
     id: 4,
-    name: 'Coming Soon',
-    description: 'More exciting tools are on the way',
-    href: '#'
+    name: 'IT Helpdesk',
+    description: 'Stay on top of your tasks effortlessly.',
+    href: 'https://ithelpdesk.4401.earth/login'
   },
   {
     id: 5,
