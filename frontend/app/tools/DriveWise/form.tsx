@@ -33,6 +33,19 @@ import {
 
 const formSchema = z.object({
     totalDays: z.number().min(1),
+    distanceCalculationMethod: z.enum(['office-to-site', 'map-selection']),
+    originOffice: z.enum(['muscat', 'dubai']),
+    siteStayDays: z.number().min(0),
+    destinationSite: z.string().optional(),
+    customOriginCoords: z.object({
+        lat: z.number(),
+        lng: z.number()
+    }).optional(),
+    customDestinationCoords: z.object({
+        lat: z.number(),
+        lng: z.number()
+    }).optional(),
+    calculatedDistance: z.number().optional(),
 })
 
 // Types for API response
@@ -65,6 +78,9 @@ interface CarRecommendationResponse {
     duration_category: 'short_term' | 'medium_term' | 'long_term';
     total_days: number;
     location: string;
+    distance_km?: number;
+    origin_office?: string;
+    site_stay_days?: number;
 }
 
 export default function DriveWiseForm() {
@@ -77,11 +93,22 @@ export default function DriveWiseForm() {
     const [isLoading, setIsLoading] = useState(false);
     const [recommendation, setRecommendation] = useState<CarRecommendationResponse | null>(null);
     const [error, setError] = useState<string | null>(null);
+    
+    // New state variables for enhanced features
+    const [distanceCalculationMethod, setDistanceCalculationMethod] = useState<'office-to-site' | 'map-selection'>('office-to-site');
+    const [originOffice, setOriginOffice] = useState<'muscat' | 'dubai'>('dubai');
+    const [siteStayDays, setSiteStayDays] = useState(0);
+    const [calculatedDistance, setCalculatedDistance] = useState<number | null>(null);
+    const [customOriginCoords, setCustomOriginCoords] = useState<{lat: number, lng: number} | null>(null);
+    const [customDestinationCoords, setCustomDestinationCoords] = useState<{lat: number, lng: number} | null>(null);
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
             totalDays: 1,
+            distanceCalculationMethod: 'office-to-site',
+            originOffice: 'dubai',
+            siteStayDays: 0,
         },
     });
 
@@ -139,20 +166,80 @@ export default function DriveWiseForm() {
         }
     }, [manualCount, timeUnit, selectionMethod, form]);
 
+    // Initialize distance calculation
+    useEffect(() => {
+        if (distanceCalculationMethod === 'office-to-site') {
+            const distance = calculateOfficeToSiteDistance(originOffice);
+            setCalculatedDistance(distance);
+            form.setValue('calculatedDistance', distance);
+        }
+    }, [distanceCalculationMethod, originOffice, form]);
+
+    // Distance calculation function
+    const calculateOfficeToSiteDistance = (office: 'muscat' | 'dubai'): number => {
+        // Predefined distances to Fujairah site
+        const distances = {
+            muscat: 340, // approximately 340 km from Muscat to Fujairah
+            dubai: 120,  // approximately 120 km from Dubai to Fujairah
+        };
+        return distances[office];
+    };
+
+    // Handle distance calculation method change
+    const handleDistanceMethodChange = (method: 'office-to-site' | 'map-selection') => {
+        setDistanceCalculationMethod(method);
+        form.setValue('distanceCalculationMethod', method);
+        
+        if (method === 'office-to-site') {
+            const distance = calculateOfficeToSiteDistance(originOffice);
+            setCalculatedDistance(distance);
+            form.setValue('calculatedDistance', distance);
+        } else {
+            setCalculatedDistance(null);
+            form.setValue('calculatedDistance', undefined);
+        }
+    };
+
+    // Handle origin office change
+    const handleOriginOfficeChange = (office: 'muscat' | 'dubai') => {
+        setOriginOffice(office);
+        form.setValue('originOffice', office);
+        
+        if (distanceCalculationMethod === 'office-to-site') {
+            const distance = calculateOfficeToSiteDistance(office);
+            setCalculatedDistance(distance);
+            form.setValue('calculatedDistance', distance);
+        }
+    };
+
+    // Handle site stay days change
+    const handleSiteStayDaysChange = (days: number) => {
+        setSiteStayDays(days);
+        form.setValue('siteStayDays', days);
+    };
+
     async function onSubmit(values: z.infer<typeof formSchema>) {
         setIsLoading(true);
         setError(null);
         setRecommendation(null);
 
         try {
+            const requestData = {
+                total_days: values.totalDays,
+                distance_calculation_method: values.distanceCalculationMethod,
+                origin_office: values.originOffice,
+                site_stay_days: values.siteStayDays,
+                calculated_distance: calculatedDistance,
+                custom_origin_coords: customOriginCoords,
+                custom_destination_coords: customDestinationCoords,
+            };
+
             const response = await fetch('/api/drivewise/analyze', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    total_days: values.totalDays
-                }),
+                body: JSON.stringify(requestData),
             });
 
             if (!response.ok) {
@@ -213,6 +300,185 @@ export default function DriveWiseForm() {
 
                     {!recommendation && (
                         <>
+                            {/* Distance Calculation Section */}
+                            <div className="mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
+                                <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                                    📍 Distance & Location Settings
+                                </h3>
+                                
+                                {/* Distance Calculation Method */}
+                                <div className="space-y-4 mb-6">
+                                    <label className="block text-sm font-medium text-gray-700 mb-3">
+                                        Choose Distance Calculation Method
+                                    </label>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div 
+                                            className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
+                                                distanceCalculationMethod === 'office-to-site' 
+                                                    ? 'border-blue-500 bg-blue-50' 
+                                                    : 'border-gray-200 bg-white hover:border-gray-300'
+                                            }`}
+                                            onClick={() => handleDistanceMethodChange('office-to-site')}
+                                        >
+                                            <div className="flex items-center space-x-3">
+                                                <input
+                                                    type="radio"
+                                                    name="distanceMethod"
+                                                    checked={distanceCalculationMethod === 'office-to-site'}
+                                                    onChange={() => handleDistanceMethodChange('office-to-site')}
+                                                    className="w-4 h-4 text-blue-600 focus:ring-blue-500"
+                                                />
+                                                <div>
+                                                    <div className="font-medium text-gray-800">🏢 Office to Fujairah Site</div>
+                                                    <div className="text-sm text-gray-600">Select from Muscat or Dubai office</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div 
+                                            className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
+                                                distanceCalculationMethod === 'map-selection' 
+                                                    ? 'border-blue-500 bg-blue-50' 
+                                                    : 'border-gray-200 bg-white hover:border-gray-300'
+                                            }`}
+                                            onClick={() => handleDistanceMethodChange('map-selection')}
+                                        >
+                                            <div className="flex items-center space-x-3">
+                                                <input
+                                                    type="radio"
+                                                    name="distanceMethod"
+                                                    checked={distanceCalculationMethod === 'map-selection'}
+                                                    onChange={() => handleDistanceMethodChange('map-selection')}
+                                                    className="w-4 h-4 text-blue-600 focus:ring-blue-500"
+                                                />
+                                                <div>
+                                                    <div className="font-medium text-gray-800">🗺️ Custom Map Selection</div>
+                                                    <div className="text-sm text-gray-600">Choose points on map</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Origin Office Selection (only show if office-to-site is selected) */}
+                                {distanceCalculationMethod === 'office-to-site' && (
+                                    <div className="space-y-4 mb-6">
+                                        <label className="block text-sm font-medium text-gray-700 mb-3">
+                                            Select Origin Office
+                                        </label>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div 
+                                                className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
+                                                    originOffice === 'dubai' 
+                                                        ? 'border-green-500 bg-green-50' 
+                                                        : 'border-gray-200 bg-white hover:border-gray-300'
+                                                }`}
+                                                onClick={() => handleOriginOfficeChange('dubai')}
+                                            >
+                                                <div className="flex items-center space-x-3">
+                                                    <input
+                                                        type="radio"
+                                                        name="originOffice"
+                                                        checked={originOffice === 'dubai'}
+                                                        onChange={() => handleOriginOfficeChange('dubai')}
+                                                        className="w-4 h-4 text-green-600 focus:ring-green-500"
+                                                    />
+                                                    <div>
+                                                        <div className="font-medium text-gray-800">🏙️ Dubai Office</div>
+                                                        <div className="text-sm text-gray-600">~120 km to Fujairah</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <div 
+                                                className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
+                                                    originOffice === 'muscat' 
+                                                        ? 'border-green-500 bg-green-50' 
+                                                        : 'border-gray-200 bg-white hover:border-gray-300'
+                                                }`}
+                                                onClick={() => handleOriginOfficeChange('muscat')}
+                                            >
+                                                <div className="flex items-center space-x-3">
+                                                    <input
+                                                        type="radio"
+                                                        name="originOffice"
+                                                        checked={originOffice === 'muscat'}
+                                                        onChange={() => handleOriginOfficeChange('muscat')}
+                                                        className="w-4 h-4 text-green-600 focus:ring-green-500"
+                                                    />
+                                                    <div>
+                                                        <div className="font-medium text-gray-800">🏔️ Muscat Office</div>
+                                                        <div className="text-sm text-gray-600">~340 km to Fujairah</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Map Selection (placeholder for future implementation) */}
+                                {distanceCalculationMethod === 'map-selection' && (
+                                    <div className="space-y-4 mb-6">
+                                        <div className="p-6 bg-yellow-50 border border-yellow-200 rounded-lg">
+                                            <div className="flex items-center space-x-3">
+                                                <span className="text-2xl">🚧</span>
+                                                <div>
+                                                    <h4 className="font-medium text-yellow-800">Map Selection Coming Soon</h4>
+                                                    <p className="text-sm text-yellow-700">Interactive map selection will be available in the next update. For now, please use the office-to-site option.</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Site Stay Days */}
+                                <div className="space-y-4">
+                                    <label className="block text-sm font-medium text-gray-700 mb-3">
+                                        Site Stay Duration (optional)
+                                    </label>
+                                    <div className="flex items-center space-x-4">
+                                        <span className="text-sm text-gray-600">Days at site:</span>
+                                        <div className="flex items-center space-x-3">
+                                            <button
+                                                type="button"
+                                                onClick={() => handleSiteStayDaysChange(Math.max(0, siteStayDays - 1))}
+                                                className="w-8 h-8 flex items-center justify-center bg-gray-50 border-2 border-gray-200 rounded-full hover:border-red-300 hover:bg-red-50 transition-all duration-200 text-gray-500 hover:text-red-600 font-bold text-sm"
+                                            >
+                                                −
+                                            </button>
+                                            <input
+                                                type="number"
+                                                value={siteStayDays}
+                                                onChange={(e) => handleSiteStayDaysChange(Math.max(0, parseInt(e.target.value) || 0))}
+                                                min="0"
+                                                className="w-16 text-center text-lg font-bold text-gray-800 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => handleSiteStayDaysChange(siteStayDays + 1)}
+                                                className="w-8 h-8 flex items-center justify-center bg-gray-50 border-2 border-gray-200 rounded-full hover:border-green-300 hover:bg-green-50 transition-all duration-200 text-gray-500 hover:text-green-600 font-bold text-sm"
+                                            >
+                                                +
+                                            </button>
+                                        </div>
+                                        <span className="text-sm text-gray-600">days</span>
+                                    </div>
+                                    <p className="text-xs text-gray-500">
+                                        Number of days you plan to stay at the site (affects accommodation and daily costs)
+                                    </p>
+                                </div>
+
+                                {/* Distance Display */}
+                                {calculatedDistance && (
+                                    <div className="mt-4 p-3 bg-white rounded-lg border">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-sm font-medium text-gray-700">📏 Calculated Distance:</span>
+                                            <span className="text-lg font-bold text-blue-600">{calculatedDistance} km</span>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
                             {/* Tabs Section */}
                             <div className="mb-8">
                                 <Tabs value={selectionMethod} onValueChange={handleTabChange}>
@@ -373,7 +639,12 @@ export default function DriveWiseForm() {
                                     <span>New Analysis</span>
                                 </Button>
                                 <div className="text-sm text-gray-600">
-                                    📍 Dubai, UAE • {recommendation.total_days} days
+                                    📍 {recommendation.origin_office ? 
+                                        `${recommendation.origin_office.charAt(0).toUpperCase() + recommendation.origin_office.slice(1)} to Fujairah` : 
+                                        'Dubai, UAE'
+                                    } • {recommendation.total_days} days
+                                    {recommendation.distance_km && ` • ${recommendation.distance_km} km`}
+                                    {recommendation.site_stay_days && recommendation.site_stay_days > 0 && ` • ${recommendation.site_stay_days} days at site`}
                                 </div>
                             </div>
 

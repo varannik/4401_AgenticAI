@@ -31,6 +31,9 @@ interface CarRecommendationResponse {
   duration_category: 'short_term' | 'medium_term' | 'long_term';
   total_days: number;
   location: string;
+  distance_km?: number;
+  origin_office?: string;
+  site_stay_days?: number;
 }
 
 // Dubai market prices (2024 estimates in AED)
@@ -56,26 +59,41 @@ class DriveWiseAgent {
     });
   }
 
-  private calculateCosts(totalDays: number) {
+  private calculateCosts(totalDays: number, distanceKm?: number, siteStayDays?: number) {
     const costs = {
-      rent: this.calculateRentCosts(totalDays),
-      buy: this.calculateBuyCosts(totalDays),
-      driver: this.calculateDriverCosts(totalDays)
+      rent: this.calculateRentCosts(totalDays, distanceKm, siteStayDays),
+      buy: this.calculateBuyCosts(totalDays, distanceKm, siteStayDays),
+      driver: this.calculateDriverCosts(totalDays, distanceKm, siteStayDays)
     };
     return costs;
   }
 
-  private calculateRentCosts(totalDays: number): CostBreakdown {
+  private calculateRentCosts(totalDays: number, distanceKm?: number, siteStayDays?: number): CostBreakdown {
     const dailyRental = DUBAI_PRICES.car_rental_per_day;
-    const dailyFuel = DUBAI_PRICES.fuel_per_day;
+    let dailyFuel = DUBAI_PRICES.fuel_per_day;
     const dailyTolls = DUBAI_PRICES.salik_tolls_per_day;
     const dailyParking = DUBAI_PRICES.parking_per_day;
     
+    // Adjust fuel costs based on distance (if provided)
+    if (distanceKm) {
+      // Assuming 12 km/l fuel efficiency and AED 2.5 per liter
+      const fuelCostPerKm = 2.5 / 12;
+      const roundTripFuel = distanceKm * 2 * fuelCostPerKm; // Round trip
+      dailyFuel = DUBAI_PRICES.fuel_per_day + (roundTripFuel / totalDays);
+    }
+    
+    // Add accommodation costs for site stays
+    let accommodationCost = 0;
+    if (siteStayDays && siteStayDays > 0) {
+      const hotelPerNight = 300; // AED per night in Fujairah
+      accommodationCost = hotelPerNight * siteStayDays;
+    }
+    
     const dailyCost = dailyRental + dailyFuel + dailyTolls + dailyParking;
-    const totalCost = dailyCost * totalDays;
+    const totalCost = (dailyCost * totalDays) + accommodationCost;
 
     return {
-      daily_cost: dailyCost,
+      daily_cost: totalCost / totalDays,
       total_cost: totalCost,
       fuel: dailyFuel * totalDays,
       tolls: dailyTolls * totalDays,
@@ -83,7 +101,7 @@ class DriveWiseAgent {
     };
   }
 
-  private calculateBuyCosts(totalDays: number): CostBreakdown {
+  private calculateBuyCosts(totalDays: number, distanceKm?: number, siteStayDays?: number): CostBreakdown {
     const carPrice = DUBAI_PRICES.car_purchase_mid_range;
     const annualInsurance = DUBAI_PRICES.insurance_annual;
     const annualRegistration = DUBAI_PRICES.registration_annual;
@@ -96,13 +114,30 @@ class DriveWiseAgent {
     const periodRegistration = annualRegistration * periodFactor;
     const periodMaintenance = annualMaintenance * periodFactor;
     const periodDepreciation = carPrice * depreciationRate * periodFactor;
-    const periodFuel = DUBAI_PRICES.fuel_per_day * totalDays;
+    
+    let periodFuel = DUBAI_PRICES.fuel_per_day * totalDays;
+    // Adjust fuel costs based on distance (if provided)
+    if (distanceKm) {
+      // Assuming 12 km/l fuel efficiency and AED 2.5 per liter
+      const fuelCostPerKm = 2.5 / 12;
+      const roundTripFuel = distanceKm * 2 * fuelCostPerKm; // Round trip
+      const dailyFuelWithDistance = DUBAI_PRICES.fuel_per_day + (roundTripFuel / totalDays);
+      periodFuel = dailyFuelWithDistance * totalDays;
+    }
+    
     const periodTolls = DUBAI_PRICES.salik_tolls_per_day * totalDays;
     const periodParking = DUBAI_PRICES.parking_per_day * totalDays;
     
+    // Add accommodation costs for site stays
+    let accommodationCost = 0;
+    if (siteStayDays && siteStayDays > 0) {
+      const hotelPerNight = 300; // AED per night in Fujairah
+      accommodationCost = hotelPerNight * siteStayDays;
+    }
+    
     const totalCost = carPrice + periodInsurance + periodRegistration + 
                      periodMaintenance + periodDepreciation + periodFuel + 
-                     periodTolls + periodParking;
+                     periodTolls + periodParking + accommodationCost;
     const dailyCost = totalCost / totalDays;
 
     return {
@@ -118,14 +153,21 @@ class DriveWiseAgent {
     };
   }
 
-  private calculateDriverCosts(totalDays: number): CostBreakdown {
+  private calculateDriverCosts(totalDays: number, distanceKm?: number, siteStayDays?: number): CostBreakdown {
     const driverDaily = DUBAI_PRICES.driver_per_day;
     
+    // Add accommodation costs for site stays
+    let accommodationCost = 0;
+    if (siteStayDays && siteStayDays > 0) {
+      const hotelPerNight = 300; // AED per night in Fujairah
+      accommodationCost = hotelPerNight * siteStayDays;
+    }
+    
     const dailyCost = driverDaily;
-    const totalCost = dailyCost * totalDays;
+    const totalCost = (dailyCost * totalDays) + accommodationCost;
 
     return {
-      daily_cost: dailyCost,
+      daily_cost: totalCost / totalDays,
       total_cost: totalCost,
       driver_salary: driverDaily * totalDays
     };
@@ -137,7 +179,7 @@ class DriveWiseAgent {
     return 'long_term';
   }
 
-  private generateRecommendations(totalDays: number, costs: any): RecommendationOption[] {
+  private generateRecommendations(totalDays: number, costs: any, distanceKm?: number, originOffice?: string): RecommendationOption[] {
     const durationCategory = this.getDurationCategory(totalDays);
     const recommendations: RecommendationOption[] = [];
 
@@ -159,6 +201,10 @@ class DriveWiseAgent {
     let rentScore = 9.0;
     if (durationCategory === 'medium_term') rentScore = 7.0;
     if (durationCategory === 'long_term') rentScore = 4.0;
+    
+    // Adjust score based on distance - rental cars good for long distances
+    if (distanceKm && distanceKm > 200) rentScore += 1.0;
+    if (originOffice === 'muscat') rentScore += 0.5; // Cross-border considerations
 
     recommendations.push({
       option_type: 'rent',
@@ -187,6 +233,10 @@ class DriveWiseAgent {
     let buyScore = 2.0;
     if (durationCategory === 'medium_term') buyScore = 6.0;
     if (durationCategory === 'long_term') buyScore = 8.5;
+    
+    // Buying less attractive for long distances due to wear and tear
+    if (distanceKm && distanceKm > 200) buyScore -= 0.5;
+    if (originOffice === 'muscat') buyScore -= 1.0; // Cross-border complications
 
     recommendations.push({
       option_type: 'buy',
@@ -214,6 +264,10 @@ class DriveWiseAgent {
     let driverScore = 7.5;
     if (durationCategory === 'medium_term') driverScore = 6.5;
     if (durationCategory === 'long_term') driverScore = 5.0;
+    
+    // Driver service excellent for long distances and cross-border travel
+    if (distanceKm && distanceKm > 200) driverScore += 1.5;
+    if (originOffice === 'muscat') driverScore += 2.0; // Professional handling of cross-border
 
     recommendations.push({
       option_type: 'driver',
@@ -226,7 +280,9 @@ class DriveWiseAgent {
     return recommendations;
   }
 
-  async generateReasoning(totalDays: number, bestOption: RecommendationOption, costs: any): Promise<string> {
+  async generateReasoning(totalDays: number, bestOption: RecommendationOption, costs: any, distanceKm?: number, originOffice?: string): Promise<string> {
+    const distanceInfo = distanceKm ? `Distance from ${originOffice || 'origin'} to Fujairah: ${distanceKm}km` : '';
+    
     const prompt = `You are a Dubai automotive consultant. Based on the analysis for ${totalDays} days, provide detailed reasoning for recommending ${bestOption.option_type}.
 
 Cost comparison:
@@ -234,14 +290,18 @@ Cost comparison:
 - Buy: ${costs.buy.total_cost.toFixed(0)} AED (${costs.buy.daily_cost.toFixed(0)} AED/day)
 - Driver: ${costs.driver.total_cost.toFixed(0)} AED (${costs.driver.daily_cost.toFixed(0)} AED/day)
 
+${distanceInfo ? `Travel details: ${distanceInfo}` : ''}
+
 Consider Dubai-specific factors:
 - Harsh climate affecting car depreciation
 - Heavy traffic and parking challenges
 - Salik toll system
 - Insurance and registration requirements
 - Fuel costs and maintenance
+${distanceKm ? '- Long distance travel considerations and fuel efficiency' : ''}
+${originOffice === 'muscat' ? '- Cross-border travel from Oman to UAE' : ''}
 
-Provide clear, actionable advice in exactly 2 short sentences explaining why ${bestOption.option_type} is the best choice for this duration.`;
+Provide clear, actionable advice in exactly 2 short sentences explaining why ${bestOption.option_type} is the best choice for this duration and distance.`;
 
     try {
       const response = await this.openai.chat.completions.create({
@@ -267,12 +327,17 @@ Provide clear, actionable advice in exactly 2 short sentences explaining why ${b
     }
   }
 
-  async analyze(totalDays: number): Promise<CarRecommendationResponse> {
-    // Calculate costs for all options
-    const costs = this.calculateCosts(totalDays);
+  async analyze(
+    totalDays: number, 
+    distanceKm?: number, 
+    originOffice?: string, 
+    siteStayDays?: number
+  ): Promise<CarRecommendationResponse> {
+    // Calculate costs for all options (including distance considerations)
+    const costs = this.calculateCosts(totalDays, distanceKm, siteStayDays);
     
     // Generate recommendations
-    const recommendations = this.generateRecommendations(totalDays, costs);
+    const recommendations = this.generateRecommendations(totalDays, costs, distanceKm, originOffice);
     
     // Find the best option
     const bestOption = recommendations.reduce((prev, current) => 
@@ -286,7 +351,7 @@ Provide clear, actionable advice in exactly 2 short sentences explaining why ${b
     const confidence = Math.min(0.95, (maxScore - secondMaxScore) / 10 + 0.6);
     
     // Generate AI reasoning
-    const reasoning = await this.generateReasoning(totalDays, bestOption, costs);
+    const reasoning = await this.generateReasoning(totalDays, bestOption, costs, distanceKm, originOffice);
     
     return {
       recommended_option: bestOption.option_type,
@@ -295,14 +360,17 @@ Provide clear, actionable advice in exactly 2 short sentences explaining why ${b
       reasoning,
       duration_category: this.getDurationCategory(totalDays),
       total_days: totalDays,
-      location: 'Dubai'
+      location: originOffice ? `${originOffice.charAt(0).toUpperCase() + originOffice.slice(1)} to Fujairah` : 'Dubai',
+      distance_km: distanceKm,
+      origin_office: originOffice,
+      site_stay_days: siteStayDays
     };
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const { total_days } = await request.json();
+    const { total_days, distance_km, origin_office, site_stay_days } = await request.json();
 
     // Validate input
     if (!total_days || total_days < 1) {
@@ -329,7 +397,7 @@ export async function POST(request: NextRequest) {
 
     // Create agent and analyze
     const agent = new DriveWiseAgent();
-    const result = await agent.analyze(total_days);
+    const result = await agent.analyze(total_days, distance_km, origin_office, site_stay_days);
 
     return NextResponse.json(result);
   } catch (error) {
