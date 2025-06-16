@@ -304,13 +304,13 @@ export default function DriveWiseForm() {
     };
 
     return (
-        <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <main className="max-w-7xl mx-auto py-4 px-4 sm:py-6 sm:px-6 lg:px-8">
             <div className="flex flex-col items-center justify-center min-h-[60vh]">
-                <div className={`bg-white/30 backdrop-blur-lg rounded-xl p-8 shadow-xl border border-white/20 hover:bg-white/40 transition-all duration-300 w-full ${recommendation ? 'max-w-6xl' : 'max-w-4xl'}`}>
+                <div className={`bg-white/30 backdrop-blur-lg rounded-xl p-4 sm:p-6 lg:p-8 shadow-xl border border-white/20 hover:bg-white/40 transition-all duration-300 w-full ${recommendation ? 'max-w-6xl' : 'max-w-2xl sm:max-w-3xl lg:max-w-4xl'}`}>
                     
                     {/* Header */}
-                    <div className="text-center mb-8">
-                        <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                    <div className="text-center mb-6 sm:mb-8">
+                        <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2">
                             🚗 DriveWise - Smart Car Decision
                         </h2>
                         <p className="text-gray-600 text-sm">
@@ -321,19 +321,20 @@ export default function DriveWiseForm() {
                     {!recommendation && (
                         <>
                             {/* Distance Calculation Section */}
-                            <div className="mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
-                                <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                            <div className="mb-6 sm:mb-8 p-4 sm:p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
+                                <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4 flex items-center">
+                                    <span className="inline-flex items-center justify-center w-6 h-6 bg-blue-500 text-white rounded-full text-sm font-bold mr-3">1</span>
                                     📍 Distance & Location Settings
                                 </h3>
                                 
                                 {/* Distance Calculation Method */}
-                                <div className="space-y-4 mb-6">
-                                    <label className="block text-sm font-medium text-gray-700 mb-3">
+                                <div className="space-y-3 sm:space-y-4 mb-4 sm:mb-6">
+                                    <label className="block text-sm font-medium text-gray-700 mb-2 sm:mb-3">
                                         Choose Distance Calculation Method
                                     </label>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
                                         <div 
-                                            className={`p-6 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
+                                            className={`p-4 sm:p-6 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
                                                 distanceCalculationMethod === 'office-to-site' 
                                                     ? 'border-blue-500 bg-blue-50' 
                                                     : 'border-gray-200 bg-white hover:border-gray-300'
@@ -349,14 +350,14 @@ export default function DriveWiseForm() {
                                                     className="w-4 h-4 text-blue-600 focus:ring-blue-500"
                                                 />
                                                 <div className="flex-1">
-                                                    <div className="font-medium text-gray-800 mb-1">🏢 Office to Fujairah Site</div>
-                                                    <div className="text-sm text-gray-600">Select from Muscat or Dubai office</div>
+                                                    <div className="font-medium text-gray-800 mb-1 text-sm sm:text-base">🏢 Office to Fujairah Site</div>
+                                                    <div className="text-xs sm:text-sm text-gray-600">Select from Muscat or Dubai office</div>
                                                 </div>
                                             </div>
                                         </div>
                                         
                                         <div 
-                                            className={`p-6 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
+                                            className={`p-4 sm:p-6 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
                                                 distanceCalculationMethod === 'map-selection' 
                                                     ? 'border-blue-500 bg-blue-50' 
                                                     : 'border-gray-200 bg-white hover:border-gray-300'
@@ -372,14 +373,14 @@ export default function DriveWiseForm() {
                                                     className="w-4 h-4 text-blue-600 focus:ring-blue-500"
                                                 />
                                                 <div className="flex-1">
-                                                    <div className="font-medium text-gray-800 mb-1">🗺️ Custom Map Selection</div>
-                                                    <div className="text-sm text-gray-600">Choose points on map</div>
+                                                    <div className="font-medium text-gray-800 mb-1 text-sm sm:text-base">🗺️ Custom Map Selection</div>
+                                                    <div className="text-xs sm:text-sm text-gray-600">Choose points on map</div>
                                                 </div>
                                             </div>
                                         </div>
 
                                         <div 
-                                            className={`p-6 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
+                                            className={`p-4 sm:p-6 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
                                                 distanceCalculationMethod === 'manual-distance' 
                                                     ? 'border-blue-500 bg-blue-50' 
                                                     : 'border-gray-200 bg-white hover:border-gray-300'
@@ -395,8 +396,8 @@ export default function DriveWiseForm() {
                                                     className="w-4 h-4 text-blue-600 focus:ring-blue-500"
                                                 />
                                                 <div className="flex-1">
-                                                    <div className="font-medium text-gray-800 mb-1">📏 Manual Distance</div>
-                                                    <div className="text-sm text-gray-600">Enter distance manually</div>
+                                                    <div className="font-medium text-gray-800 mb-1 text-sm sm:text-base">📏 Manual Distance</div>
+                                                    <div className="text-xs sm:text-sm text-gray-600">Enter distance manually</div>
                                                 </div>
                                             </div>
                                         </div>
@@ -405,13 +406,13 @@ export default function DriveWiseForm() {
 
                                 {/* Origin Office Selection (only show if office-to-site is selected) */}
                                 {distanceCalculationMethod === 'office-to-site' && (
-                                    <div className="space-y-4 mb-6">
-                                        <label className="block text-sm font-medium text-gray-700 mb-3">
+                                    <div className="space-y-3 sm:space-y-4 mb-4 sm:mb-6">
+                                        <label className="block text-sm font-medium text-gray-700 mb-2 sm:mb-3">
                                             Select Origin Office
                                         </label>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
                                             <div 
-                                                className={`p-6 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
+                                                className={`p-4 sm:p-6 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
                                                     originOffice === 'dubai' 
                                                         ? 'border-green-500 bg-green-50' 
                                                         : 'border-gray-200 bg-white hover:border-gray-300'
@@ -427,14 +428,14 @@ export default function DriveWiseForm() {
                                                         className="w-4 h-4 text-green-600 focus:ring-green-500"
                                                     />
                                                     <div className="flex-1">
-                                                        <div className="font-medium text-gray-800 mb-1">🏙️ Dubai Office</div>
-                                                        <div className="text-sm text-gray-600">~120 km to Fujairah</div>
+                                                        <div className="font-medium text-gray-800 mb-1 text-sm sm:text-base">🏙️ Dubai Office</div>
+                                                        <div className="text-xs sm:text-sm text-gray-600">~120 km to Fujairah</div>
                                                     </div>
                                                 </div>
                                             </div>
                                             
                                             <div 
-                                                className={`p-6 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
+                                                className={`p-4 sm:p-6 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
                                                     originOffice === 'muscat' 
                                                         ? 'border-green-500 bg-green-50' 
                                                         : 'border-gray-200 bg-white hover:border-gray-300'
@@ -450,8 +451,8 @@ export default function DriveWiseForm() {
                                                         className="w-4 h-4 text-green-600 focus:ring-green-500"
                                                     />
                                                     <div className="flex-1">
-                                                        <div className="font-medium text-gray-800 mb-1">🏔️ Muscat Office</div>
-                                                        <div className="text-sm text-gray-600">~340 km to Fujairah</div>
+                                                        <div className="font-medium text-gray-800 mb-1 text-sm sm:text-base">🏔️ Muscat Office</div>
+                                                        <div className="text-xs sm:text-sm text-gray-600">~340 km to Fujairah</div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -476,18 +477,21 @@ export default function DriveWiseForm() {
 
                                 {/* Manual Distance Input */}
                                 {distanceCalculationMethod === 'manual-distance' && (
-                                    <div className="space-y-6 mb-6">
-                                        <label className="block text-lg font-medium text-gray-700 mb-4">
+                                    <div className="space-y-4 sm:space-y-6 mb-4 sm:mb-6">
+                                        <label className="block text-base sm:text-lg font-medium text-gray-700 mb-3 sm:mb-4">
                                             Enter Distance (km)
                                         </label>
-                                        <div className="bg-white rounded-lg p-6 border-2 border-gray-200">
-                                            <div className="flex items-center justify-center space-x-6">
-                                                <span className="text-sm font-medium text-gray-600">Distance:</span>
-                                                <div className="flex items-center space-x-4">
+                                        <div className="bg-white rounded-lg p-4 sm:p-6 border-2 border-gray-200">
+                                            <div className="flex flex-row items-center justify-center space-x-1 sm:space-x-6">
+                                                <span className="text-xs sm:text-sm font-medium text-gray-600 w-12 sm:w-20 text-right">
+                                                    <span className="hidden sm:inline">Distance:</span>
+                                                    <span className="sm:hidden">Dist:</span>
+                                                </span>
+                                                <div className="flex items-center justify-center space-x-1 sm:space-x-4">
                                                     <button
                                                         type="button"
                                                         onClick={() => handleManualDistanceChange(Math.max(1, manualDistance - 10))}
-                                                        className="w-10 h-10 flex items-center justify-center bg-red-50 border-2 border-red-200 rounded-full hover:border-red-400 hover:bg-red-100 transition-all duration-200 text-red-600 hover:text-red-700 font-bold text-lg shadow-sm hover:shadow-md"
+                                                        className="w-10 h-10 sm:w-10 sm:h-10 flex items-center justify-center bg-red-50 border-2 border-red-200 rounded-full hover:border-red-400 hover:bg-red-100 transition-all duration-200 text-red-600 hover:text-red-700 font-bold text-base sm:text-lg shadow-sm hover:shadow-md touch-manipulation"
                                                     >
                                                         −
                                                     </button>
@@ -496,20 +500,20 @@ export default function DriveWiseForm() {
                                                         value={manualDistance}
                                                         onChange={(e) => handleManualDistanceChange(Math.max(1, parseInt(e.target.value) || 1))}
                                                         min="1"
-                                                        className="w-24 text-center text-xl font-bold text-gray-800 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none py-3 px-2"
+                                                        className="w-16 sm:w-24 h-10 sm:h-10 text-center text-base sm:text-xl font-bold text-gray-800 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none"
                                                     />
                                                     <button
                                                         type="button"
                                                         onClick={() => handleManualDistanceChange(manualDistance + 10)}
-                                                        className="w-10 h-10 flex items-center justify-center bg-green-50 border-2 border-green-200 rounded-full hover:border-green-400 hover:bg-green-100 transition-all duration-200 text-green-600 hover:text-green-700 font-bold text-lg shadow-sm hover:shadow-md"
+                                                        className="w-10 h-10 sm:w-10 sm:h-10 flex items-center justify-center bg-green-50 border-2 border-green-200 rounded-full hover:border-green-400 hover:bg-green-100 transition-all duration-200 text-green-600 hover:text-green-700 font-bold text-base sm:text-lg shadow-sm hover:shadow-md touch-manipulation"
                                                     >
                                                         +
                                                     </button>
                                                 </div>
-                                                <span className="text-sm font-medium text-gray-600">kilometers</span>
+                                                <span className="text-xs sm:text-sm font-medium text-gray-600 w-8 sm:w-20 text-left">km</span>
                                             </div>
-                                            <div className="mt-4 text-center">
-                                                <p className="text-sm text-gray-500">
+                                            <div className="mt-3 sm:mt-4 text-center">
+                                                <p className="text-xs sm:text-sm text-gray-500">
                                                     Enter the one-way distance for your trip. This will be used to calculate fuel and travel costs.
                                                 </p>
                                             </div>
@@ -518,18 +522,21 @@ export default function DriveWiseForm() {
                                 )}
 
                                 {/* Site Stay Days */}
-                                <div className="space-y-4">
-                                    <label className="block text-lg font-medium text-gray-700 mb-4">
+                                <div className="space-y-3 sm:space-y-4">
+                                    <label className="block text-base sm:text-lg font-medium text-gray-700 mb-3 sm:mb-4">
                                         Site Stay Duration (optional)
                                     </label>
-                                    <div className="bg-white rounded-lg p-6 border-2 border-gray-200">
-                                        <div className="flex items-center justify-center space-x-6">
-                                            <span className="text-sm font-medium text-gray-600">Days at site:</span>
-                                            <div className="flex items-center space-x-4">
+                                    <div className="bg-white rounded-lg p-4 sm:p-6 border-2 border-gray-200">
+                                        <div className="flex flex-row items-center justify-center space-x-1 sm:space-x-6">
+                                            <span className="text-xs sm:text-sm font-medium text-gray-600 w-12 sm:w-20 text-right">
+                                                <span className="hidden sm:inline">Days at site:</span>
+                                                <span className="sm:hidden">Days:</span>
+                                            </span>
+                                            <div className="flex items-center justify-center space-x-1 sm:space-x-4">
                                                 <button
                                                     type="button"
                                                     onClick={() => handleSiteStayDaysChange(Math.max(0, siteStayDays - 1))}
-                                                    className="w-10 h-10 flex items-center justify-center bg-red-50 border-2 border-red-200 rounded-full hover:border-red-400 hover:bg-red-100 transition-all duration-200 text-red-600 hover:text-red-700 font-bold text-lg shadow-sm hover:shadow-md"
+                                                    className="w-10 h-10 sm:w-10 sm:h-10 flex items-center justify-center bg-red-50 border-2 border-red-200 rounded-full hover:border-red-400 hover:bg-red-100 transition-all duration-200 text-red-600 hover:text-red-700 font-bold text-base sm:text-lg shadow-sm hover:shadow-md touch-manipulation"
                                                 >
                                                     −
                                                 </button>
@@ -538,20 +545,20 @@ export default function DriveWiseForm() {
                                                     value={siteStayDays}
                                                     onChange={(e) => handleSiteStayDaysChange(Math.max(0, parseInt(e.target.value) || 0))}
                                                     min="0"
-                                                    className="w-20 text-center text-xl font-bold text-gray-800 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none py-3 px-2"
+                                                    className="w-16 sm:w-20 h-10 sm:h-10 text-center text-base sm:text-xl font-bold text-gray-800 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none"
                                                 />
                                                 <button
                                                     type="button"
                                                     onClick={() => handleSiteStayDaysChange(siteStayDays + 1)}
-                                                    className="w-10 h-10 flex items-center justify-center bg-green-50 border-2 border-green-200 rounded-full hover:border-green-400 hover:bg-green-100 transition-all duration-200 text-green-600 hover:text-green-700 font-bold text-lg shadow-sm hover:shadow-md"
+                                                    className="w-10 h-10 sm:w-10 sm:h-10 flex items-center justify-center bg-green-50 border-2 border-green-200 rounded-full hover:border-green-400 hover:bg-green-100 transition-all duration-200 text-green-600 hover:text-green-700 font-bold text-base sm:text-lg shadow-sm hover:shadow-md touch-manipulation"
                                                 >
                                                     +
                                                 </button>
                                             </div>
-                                            <span className="text-sm font-medium text-gray-600">days</span>
+                                            <span className="text-xs sm:text-sm font-medium text-gray-600 w-12 sm:w-20 text-left">days</span>
                                         </div>
-                                        <div className="mt-4 text-center">
-                                            <p className="text-sm text-gray-500">
+                                        <div className="mt-3 sm:mt-4 text-center">
+                                            <p className="text-xs sm:text-sm text-gray-500">
                                                 Number of days you plan to stay at the site (affects accommodation and daily costs)
                                             </p>
                                         </div>
@@ -560,41 +567,45 @@ export default function DriveWiseForm() {
 
                                 {/* Distance Display */}
                                 {calculatedDistance && (
-                                    <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg border-2 border-blue-200">
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-lg font-semibold text-blue-800 flex items-center">
+                                    <div className="mt-4 sm:mt-6 p-3 sm:p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg border-2 border-blue-200">
+                                        <div className="flex flex-col sm:flex-row items-center justify-between space-y-2 sm:space-y-0">
+                                            <span className="text-base sm:text-lg font-semibold text-blue-800 flex items-center">
                                                 📏 <span className="ml-2">Calculated Distance:</span>
                                             </span>
-                                            <span className="text-2xl font-bold text-blue-600">{calculatedDistance} km</span>
+                                            <span className="text-xl sm:text-2xl font-bold text-blue-600">{calculatedDistance} km</span>
                                         </div>
                                     </div>
                                 )}
                             </div>
 
-                            {/* Tabs Section */}
-                            <div className="mb-8">
+                            {/* Duration Selection Section */}
+                            <div className="mb-6 sm:mb-8 p-4 sm:p-6 bg-gradient-to-r from-green-50 to-teal-50 rounded-xl border border-green-200">
+                                <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4 flex items-center">
+                                    <span className="inline-flex items-center justify-center w-6 h-6 bg-green-500 text-white rounded-full text-sm font-bold mr-3">2</span>
+                                    ⏱️ Duration Selection
+                                </h3>
                                 <Tabs value={selectionMethod} onValueChange={handleTabChange}>
-                                    <TabsList className="grid w-full grid-cols-2 mb-6">
-                                        <TabsTrigger value="manual" className="text-sm font-medium">
+                                    <TabsList className="grid w-full grid-cols-2 mb-4 sm:mb-6 h-10 sm:h-12">
+                                        <TabsTrigger value="manual" className="text-xs sm:text-sm font-medium py-1 sm:py-2 px-2 sm:px-3 h-8 sm:h-10">
                                             Manual Selection
                                         </TabsTrigger>
-                                        <TabsTrigger value="date" className="text-sm font-medium">
+                                        <TabsTrigger value="date" className="text-xs sm:text-sm font-medium py-1 sm:py-2 px-2 sm:px-3 h-8 sm:h-10">
                                             Date Range
                                         </TabsTrigger>
                                     </TabsList>
                                     
                                     <TabsContents>
                                         <TabsContent value="manual">
-                                            <div className="space-y-6">
+                                            <div className="space-y-4 sm:space-y-6">
                                                 {/* Time Unit and Quantity Section */}
-                                                <div className="grid grid-cols-2 gap-4">
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                                                     {/* Time Unit Selector */}
-                                                    <div className="space-y-3">
+                                                    <div className="space-y-2 sm:space-y-3">
                                                         <label className="block text-sm font-medium text-gray-700">
                                                             Time Unit
                                                         </label>
                                                         <Select value={timeUnit} onValueChange={(value) => setTimeUnit(value)}>
-                                                            <SelectTrigger className="w-full border-2 border-gray-100 rounded-lg hover:border-blue-200">
+                                                            <SelectTrigger className="w-full border-2 border-gray-100 rounded-lg hover:border-blue-200 h-12 sm:h-auto">
                                                                 <SelectValue placeholder="Select time unit" />
                                                             </SelectTrigger>
                                                             <SelectContent>
@@ -607,15 +618,15 @@ export default function DriveWiseForm() {
                                                     </div>
 
                                                     {/* Counter Section */}
-                                                    <div className="space-y-3">
+                                                    <div className="space-y-2 sm:space-y-3">
                                                         <label className="block text-sm font-medium text-gray-700">
                                                             Quantity
                                                         </label>
-                                                        <div className="flex items-center justify-center space-x-3">
+                                                        <div className="flex items-center justify-center space-x-3 sm:space-x-4">
                                                             <button
                                                                 type="button"
                                                                 onClick={() => setManualCount(Math.max(1, manualCount - 1))}
-                                                                className="w-8 h-8 flex items-center justify-center bg-gray-50 border-2 border-gray-200 rounded-full hover:border-red-300 hover:bg-red-50 transition-all duration-200 text-gray-500 hover:text-red-600 font-bold text-sm shadow-sm hover:shadow-md"
+                                                                className="w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center bg-gray-50 border-2 border-gray-200 rounded-full hover:border-red-300 hover:bg-red-50 transition-all duration-200 text-gray-500 hover:text-red-600 font-bold text-lg sm:text-sm shadow-sm hover:shadow-md touch-manipulation"
                                                             >
                                                                 −
                                                             </button>
@@ -624,12 +635,12 @@ export default function DriveWiseForm() {
                                                                 value={manualCount}
                                                                 onChange={(e) => setManualCount(Math.max(1, parseInt(e.target.value) || 1))}
                                                                 min="1"
-                                                                className="w-16 text-center text-xl font-bold text-gray-800 border-2 border-gray-100 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none transition-all duration-200"
+                                                                className="w-16 sm:w-16 h-10 sm:h-auto text-center text-lg sm:text-xl font-bold text-gray-800 border-2 border-gray-100 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none transition-all duration-200"
                                                             />
                                                             <button
                                                                 type="button"
                                                                 onClick={() => setManualCount(manualCount + 1)}
-                                                                className="w-8 h-8 flex items-center justify-center bg-gray-50 border-2 border-gray-200 rounded-full hover:border-green-300 hover:bg-green-50 transition-all duration-200 text-gray-500 hover:text-green-600 font-bold text-sm shadow-sm hover:shadow-md"
+                                                                className="w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center bg-gray-50 border-2 border-gray-200 rounded-full hover:border-green-300 hover:bg-green-50 transition-all duration-200 text-gray-500 hover:text-green-600 font-bold text-lg sm:text-sm shadow-sm hover:shadow-md touch-manipulation"
                                                             >
                                                                 +
                                                             </button>
@@ -653,39 +664,79 @@ export default function DriveWiseForm() {
                                 </Tabs>
                             </div>
 
-                            {/* Form Section */}
+                            {/* Analysis Section */}
                             <div className="border-t border-gray-200 pt-6">
+                                <div className="mb-4 flex items-center">
+                                    <span className="inline-flex items-center justify-center w-6 h-6 bg-purple-500 text-white rounded-full text-sm font-bold mr-3">3</span>
+                                    <h3 className="text-base sm:text-lg font-semibold text-gray-800">🤖 AI Analysis</h3>
+                                </div>
+
+                                {/* User Selections Summary */}
+                                <div className="mb-6 p-4 sm:p-6 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border border-purple-200">
+                                    <h4 className="text-sm sm:text-base font-semibold text-gray-800 mb-3 sm:mb-4 flex items-center">
+                                        📋 Your Selections Summary
+                                    </h4>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 text-xs sm:text-sm">
+                                        {/* Distance Method */}
+                                        <div className="bg-white/70 rounded-lg p-3 border border-purple-100">
+                                            <div className="font-medium text-gray-700 mb-1">📍 Distance Method</div>
+                                            <div className="text-gray-600">
+                                                {distanceCalculationMethod === 'office-to-site' && '🏢 Office to Site'}
+                                                {distanceCalculationMethod === 'map-selection' && '🗺️ Map Selection'}
+                                                {distanceCalculationMethod === 'manual-distance' && '📏 Manual Distance'}
+                                            </div>
+                                        </div>
+
+                                        {/* Origin Office (if applicable) */}
+                                        {distanceCalculationMethod === 'office-to-site' && (
+                                            <div className="bg-white/70 rounded-lg p-3 border border-purple-100">
+                                                <div className="font-medium text-gray-700 mb-1">🏢 Origin Office</div>
+                                                <div className="text-gray-600">
+                                                    {originOffice === 'dubai' && '🏙️ Dubai Office'}
+                                                    {originOffice === 'muscat' && '🏔️ Muscat Office'}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Distance */}
+                                        {calculatedDistance && (
+                                            <div className="bg-white/70 rounded-lg p-3 border border-purple-100">
+                                                <div className="font-medium text-gray-700 mb-1">📏 Distance</div>
+                                                <div className="text-gray-600 font-semibold">{calculatedDistance} km</div>
+                                            </div>
+                                        )}
+
+                                        {/* Site Stay Days */}
+                                        <div className="bg-white/70 rounded-lg p-3 border border-purple-100">
+                                            <div className="font-medium text-gray-700 mb-1">🏕️ Site Stay</div>
+                                            <div className="text-gray-600">
+                                                {siteStayDays > 0 ? `${siteStayDays} days` : 'No stay'}
+                                            </div>
+                                        </div>
+
+                                        {/* Duration Method */}
+                                        <div className="bg-white/70 rounded-lg p-3 border border-purple-100">
+                                            <div className="font-medium text-gray-700 mb-1">⏱️ Duration Method</div>
+                                            <div className="text-gray-600">
+                                                {selectionMethod === 'manual' ? '📝 Manual Selection' : '📅 Date Range'}
+                                            </div>
+                                        </div>
+
+
+
+                                        {/* Total Days */}
+                                        <div className="bg-white/70 rounded-lg p-3 border border-purple-100 sm:col-span-2 lg:col-span-1">
+                                            <div className="font-medium text-gray-700 mb-1">📊 Total Duration</div>
+                                            <div className="text-gray-600 font-bold text-base sm:text-lg text-purple-600">
+                                                {totalDays} days
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <Form {...form}>
                                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                                        <FormField
-                                            control={form.control}
-                                            name="totalDays"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel className="text-sm font-medium text-gray-700">
-                                                        Total Duration (days)
-                                                    </FormLabel>
-                                                    <FormControl>
-                                                        <div className="relative">
-                                                            <Input 
-                                                                name={field.name}
-                                                                value={totalDays}
-                                                                onChange={field.onChange}
-                                                                onBlur={field.onBlur}
-                                                                type="number"
-                                                                min="1"
-                                                                readOnly
-                                                                className="w-full px-4 py-3 text-lg font-semibold text-center bg-gray-50 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                                            />
-                                                            <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                                                                <span className="text-gray-500 text-sm">days</span>
-                                                            </div>
-                                                        </div>
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
+                                        
                                         
                                         <Button 
                                             type="submit" 
