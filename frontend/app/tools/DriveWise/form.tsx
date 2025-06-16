@@ -33,7 +33,7 @@ import {
 
 const formSchema = z.object({
     totalDays: z.number().min(1),
-    distanceCalculationMethod: z.enum(['office-to-site', 'map-selection']),
+    distanceCalculationMethod: z.enum(['office-to-site', 'map-selection', 'manual-distance']),
     originOffice: z.enum(['muscat', 'dubai']),
     siteStayDays: z.number().min(0),
     destinationSite: z.string().optional(),
@@ -46,6 +46,7 @@ const formSchema = z.object({
         lng: z.number()
     }).optional(),
     calculatedDistance: z.number().optional(),
+    manualDistance: z.number().min(1).optional(),
 })
 
 // Types for API response
@@ -95,12 +96,13 @@ export default function DriveWiseForm() {
     const [error, setError] = useState<string | null>(null);
     
     // New state variables for enhanced features
-    const [distanceCalculationMethod, setDistanceCalculationMethod] = useState<'office-to-site' | 'map-selection'>('office-to-site');
+    const [distanceCalculationMethod, setDistanceCalculationMethod] = useState<'office-to-site' | 'map-selection' | 'manual-distance'>('office-to-site');
     const [originOffice, setOriginOffice] = useState<'muscat' | 'dubai'>('dubai');
     const [siteStayDays, setSiteStayDays] = useState(0);
     const [calculatedDistance, setCalculatedDistance] = useState<number | null>(null);
     const [customOriginCoords, setCustomOriginCoords] = useState<{lat: number, lng: number} | null>(null);
     const [customDestinationCoords, setCustomDestinationCoords] = useState<{lat: number, lng: number} | null>(null);
+    const [manualDistance, setManualDistance] = useState<number>(100);
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -109,6 +111,7 @@ export default function DriveWiseForm() {
             distanceCalculationMethod: 'office-to-site',
             originOffice: 'dubai',
             siteStayDays: 0,
+            manualDistance: 100,
         },
     });
 
@@ -186,7 +189,7 @@ export default function DriveWiseForm() {
     };
 
     // Handle distance calculation method change
-    const handleDistanceMethodChange = (method: 'office-to-site' | 'map-selection') => {
+    const handleDistanceMethodChange = (method: 'office-to-site' | 'map-selection' | 'manual-distance') => {
         setDistanceCalculationMethod(method);
         form.setValue('distanceCalculationMethod', method);
         
@@ -194,9 +197,15 @@ export default function DriveWiseForm() {
             const distance = calculateOfficeToSiteDistance(originOffice);
             setCalculatedDistance(distance);
             form.setValue('calculatedDistance', distance);
+            form.setValue('manualDistance', undefined);
+        } else if (method === 'manual-distance') {
+            setCalculatedDistance(manualDistance);
+            form.setValue('calculatedDistance', manualDistance);
+            form.setValue('manualDistance', manualDistance);
         } else {
             setCalculatedDistance(null);
             form.setValue('calculatedDistance', undefined);
+            form.setValue('manualDistance', undefined);
         }
     };
 
@@ -218,6 +227,15 @@ export default function DriveWiseForm() {
         form.setValue('siteStayDays', days);
     };
 
+    const handleManualDistanceChange = (distance: number) => {
+        setManualDistance(distance);
+        form.setValue('manualDistance', distance);
+        if (distanceCalculationMethod === 'manual-distance') {
+            setCalculatedDistance(distance);
+            form.setValue('calculatedDistance', distance);
+        }
+    };
+
     async function onSubmit(values: z.infer<typeof formSchema>) {
         setIsLoading(true);
         setError(null);
@@ -229,7 +247,9 @@ export default function DriveWiseForm() {
                 distance_calculation_method: values.distanceCalculationMethod,
                 origin_office: values.originOffice,
                 site_stay_days: values.siteStayDays,
+                distance_km: values.distanceCalculationMethod === 'manual-distance' ? values.manualDistance : calculatedDistance,
                 calculated_distance: calculatedDistance,
+                manual_distance: values.manualDistance,
                 custom_origin_coords: customOriginCoords,
                 custom_destination_coords: customDestinationCoords,
             };
@@ -286,7 +306,7 @@ export default function DriveWiseForm() {
     return (
         <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
             <div className="flex flex-col items-center justify-center min-h-[60vh]">
-                <div className={`bg-white/30 backdrop-blur-lg rounded-xl p-8 shadow-xl border border-white/20 hover:bg-white/40 transition-all duration-300 w-full ${recommendation ? 'max-w-6xl' : 'max-w-lg'}`}>
+                <div className={`bg-white/30 backdrop-blur-lg rounded-xl p-8 shadow-xl border border-white/20 hover:bg-white/40 transition-all duration-300 w-full ${recommendation ? 'max-w-6xl' : 'max-w-4xl'}`}>
                     
                     {/* Header */}
                     <div className="text-center mb-8">
@@ -311,9 +331,9 @@ export default function DriveWiseForm() {
                                     <label className="block text-sm font-medium text-gray-700 mb-3">
                                         Choose Distance Calculation Method
                                     </label>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                         <div 
-                                            className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
+                                            className={`p-6 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
                                                 distanceCalculationMethod === 'office-to-site' 
                                                     ? 'border-blue-500 bg-blue-50' 
                                                     : 'border-gray-200 bg-white hover:border-gray-300'
@@ -328,15 +348,15 @@ export default function DriveWiseForm() {
                                                     onChange={() => handleDistanceMethodChange('office-to-site')}
                                                     className="w-4 h-4 text-blue-600 focus:ring-blue-500"
                                                 />
-                                                <div>
-                                                    <div className="font-medium text-gray-800">🏢 Office to Fujairah Site</div>
+                                                <div className="flex-1">
+                                                    <div className="font-medium text-gray-800 mb-1">🏢 Office to Fujairah Site</div>
                                                     <div className="text-sm text-gray-600">Select from Muscat or Dubai office</div>
                                                 </div>
                                             </div>
                                         </div>
                                         
                                         <div 
-                                            className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
+                                            className={`p-6 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
                                                 distanceCalculationMethod === 'map-selection' 
                                                     ? 'border-blue-500 bg-blue-50' 
                                                     : 'border-gray-200 bg-white hover:border-gray-300'
@@ -351,9 +371,32 @@ export default function DriveWiseForm() {
                                                     onChange={() => handleDistanceMethodChange('map-selection')}
                                                     className="w-4 h-4 text-blue-600 focus:ring-blue-500"
                                                 />
-                                                <div>
-                                                    <div className="font-medium text-gray-800">🗺️ Custom Map Selection</div>
+                                                <div className="flex-1">
+                                                    <div className="font-medium text-gray-800 mb-1">🗺️ Custom Map Selection</div>
                                                     <div className="text-sm text-gray-600">Choose points on map</div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div 
+                                            className={`p-6 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
+                                                distanceCalculationMethod === 'manual-distance' 
+                                                    ? 'border-blue-500 bg-blue-50' 
+                                                    : 'border-gray-200 bg-white hover:border-gray-300'
+                                            }`}
+                                            onClick={() => handleDistanceMethodChange('manual-distance')}
+                                        >
+                                            <div className="flex items-center space-x-3">
+                                                <input
+                                                    type="radio"
+                                                    name="distanceMethod"
+                                                    checked={distanceCalculationMethod === 'manual-distance'}
+                                                    onChange={() => handleDistanceMethodChange('manual-distance')}
+                                                    className="w-4 h-4 text-blue-600 focus:ring-blue-500"
+                                                />
+                                                <div className="flex-1">
+                                                    <div className="font-medium text-gray-800 mb-1">📏 Manual Distance</div>
+                                                    <div className="text-sm text-gray-600">Enter distance manually</div>
                                                 </div>
                                             </div>
                                         </div>
@@ -366,9 +409,9 @@ export default function DriveWiseForm() {
                                         <label className="block text-sm font-medium text-gray-700 mb-3">
                                             Select Origin Office
                                         </label>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                             <div 
-                                                className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
+                                                className={`p-6 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
                                                     originOffice === 'dubai' 
                                                         ? 'border-green-500 bg-green-50' 
                                                         : 'border-gray-200 bg-white hover:border-gray-300'
@@ -383,15 +426,15 @@ export default function DriveWiseForm() {
                                                         onChange={() => handleOriginOfficeChange('dubai')}
                                                         className="w-4 h-4 text-green-600 focus:ring-green-500"
                                                     />
-                                                    <div>
-                                                        <div className="font-medium text-gray-800">🏙️ Dubai Office</div>
+                                                    <div className="flex-1">
+                                                        <div className="font-medium text-gray-800 mb-1">🏙️ Dubai Office</div>
                                                         <div className="text-sm text-gray-600">~120 km to Fujairah</div>
                                                     </div>
                                                 </div>
                                             </div>
                                             
                                             <div 
-                                                className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
+                                                className={`p-6 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
                                                     originOffice === 'muscat' 
                                                         ? 'border-green-500 bg-green-50' 
                                                         : 'border-gray-200 bg-white hover:border-gray-300'
@@ -406,8 +449,8 @@ export default function DriveWiseForm() {
                                                         onChange={() => handleOriginOfficeChange('muscat')}
                                                         className="w-4 h-4 text-green-600 focus:ring-green-500"
                                                     />
-                                                    <div>
-                                                        <div className="font-medium text-gray-800">🏔️ Muscat Office</div>
+                                                    <div className="flex-1">
+                                                        <div className="font-medium text-gray-800 mb-1">🏔️ Muscat Office</div>
                                                         <div className="text-sm text-gray-600">~340 km to Fujairah</div>
                                                     </div>
                                                 </div>
@@ -431,49 +474,98 @@ export default function DriveWiseForm() {
                                     </div>
                                 )}
 
+                                {/* Manual Distance Input */}
+                                {distanceCalculationMethod === 'manual-distance' && (
+                                    <div className="space-y-6 mb-6">
+                                        <label className="block text-lg font-medium text-gray-700 mb-4">
+                                            Enter Distance (km)
+                                        </label>
+                                        <div className="bg-white rounded-lg p-6 border-2 border-gray-200">
+                                            <div className="flex items-center justify-center space-x-6">
+                                                <span className="text-sm font-medium text-gray-600">Distance:</span>
+                                                <div className="flex items-center space-x-4">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleManualDistanceChange(Math.max(1, manualDistance - 10))}
+                                                        className="w-10 h-10 flex items-center justify-center bg-red-50 border-2 border-red-200 rounded-full hover:border-red-400 hover:bg-red-100 transition-all duration-200 text-red-600 hover:text-red-700 font-bold text-lg shadow-sm hover:shadow-md"
+                                                    >
+                                                        −
+                                                    </button>
+                                                    <input
+                                                        type="number"
+                                                        value={manualDistance}
+                                                        onChange={(e) => handleManualDistanceChange(Math.max(1, parseInt(e.target.value) || 1))}
+                                                        min="1"
+                                                        className="w-24 text-center text-xl font-bold text-gray-800 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none py-3 px-2"
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleManualDistanceChange(manualDistance + 10)}
+                                                        className="w-10 h-10 flex items-center justify-center bg-green-50 border-2 border-green-200 rounded-full hover:border-green-400 hover:bg-green-100 transition-all duration-200 text-green-600 hover:text-green-700 font-bold text-lg shadow-sm hover:shadow-md"
+                                                    >
+                                                        +
+                                                    </button>
+                                                </div>
+                                                <span className="text-sm font-medium text-gray-600">kilometers</span>
+                                            </div>
+                                            <div className="mt-4 text-center">
+                                                <p className="text-sm text-gray-500">
+                                                    Enter the one-way distance for your trip. This will be used to calculate fuel and travel costs.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
                                 {/* Site Stay Days */}
                                 <div className="space-y-4">
-                                    <label className="block text-sm font-medium text-gray-700 mb-3">
+                                    <label className="block text-lg font-medium text-gray-700 mb-4">
                                         Site Stay Duration (optional)
                                     </label>
-                                    <div className="flex items-center space-x-4">
-                                        <span className="text-sm text-gray-600">Days at site:</span>
-                                        <div className="flex items-center space-x-3">
-                                            <button
-                                                type="button"
-                                                onClick={() => handleSiteStayDaysChange(Math.max(0, siteStayDays - 1))}
-                                                className="w-8 h-8 flex items-center justify-center bg-gray-50 border-2 border-gray-200 rounded-full hover:border-red-300 hover:bg-red-50 transition-all duration-200 text-gray-500 hover:text-red-600 font-bold text-sm"
-                                            >
-                                                −
-                                            </button>
-                                            <input
-                                                type="number"
-                                                value={siteStayDays}
-                                                onChange={(e) => handleSiteStayDaysChange(Math.max(0, parseInt(e.target.value) || 0))}
-                                                min="0"
-                                                className="w-16 text-center text-lg font-bold text-gray-800 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={() => handleSiteStayDaysChange(siteStayDays + 1)}
-                                                className="w-8 h-8 flex items-center justify-center bg-gray-50 border-2 border-gray-200 rounded-full hover:border-green-300 hover:bg-green-50 transition-all duration-200 text-gray-500 hover:text-green-600 font-bold text-sm"
-                                            >
-                                                +
-                                            </button>
+                                    <div className="bg-white rounded-lg p-6 border-2 border-gray-200">
+                                        <div className="flex items-center justify-center space-x-6">
+                                            <span className="text-sm font-medium text-gray-600">Days at site:</span>
+                                            <div className="flex items-center space-x-4">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleSiteStayDaysChange(Math.max(0, siteStayDays - 1))}
+                                                    className="w-10 h-10 flex items-center justify-center bg-red-50 border-2 border-red-200 rounded-full hover:border-red-400 hover:bg-red-100 transition-all duration-200 text-red-600 hover:text-red-700 font-bold text-lg shadow-sm hover:shadow-md"
+                                                >
+                                                    −
+                                                </button>
+                                                <input
+                                                    type="number"
+                                                    value={siteStayDays}
+                                                    onChange={(e) => handleSiteStayDaysChange(Math.max(0, parseInt(e.target.value) || 0))}
+                                                    min="0"
+                                                    className="w-20 text-center text-xl font-bold text-gray-800 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none py-3 px-2"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleSiteStayDaysChange(siteStayDays + 1)}
+                                                    className="w-10 h-10 flex items-center justify-center bg-green-50 border-2 border-green-200 rounded-full hover:border-green-400 hover:bg-green-100 transition-all duration-200 text-green-600 hover:text-green-700 font-bold text-lg shadow-sm hover:shadow-md"
+                                                >
+                                                    +
+                                                </button>
+                                            </div>
+                                            <span className="text-sm font-medium text-gray-600">days</span>
                                         </div>
-                                        <span className="text-sm text-gray-600">days</span>
+                                        <div className="mt-4 text-center">
+                                            <p className="text-sm text-gray-500">
+                                                Number of days you plan to stay at the site (affects accommodation and daily costs)
+                                            </p>
+                                        </div>
                                     </div>
-                                    <p className="text-xs text-gray-500">
-                                        Number of days you plan to stay at the site (affects accommodation and daily costs)
-                                    </p>
                                 </div>
 
                                 {/* Distance Display */}
                                 {calculatedDistance && (
-                                    <div className="mt-4 p-3 bg-white rounded-lg border">
+                                    <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg border-2 border-blue-200">
                                         <div className="flex items-center justify-between">
-                                            <span className="text-sm font-medium text-gray-700">📏 Calculated Distance:</span>
-                                            <span className="text-lg font-bold text-blue-600">{calculatedDistance} km</span>
+                                            <span className="text-lg font-semibold text-blue-800 flex items-center">
+                                                📏 <span className="ml-2">Calculated Distance:</span>
+                                            </span>
+                                            <span className="text-2xl font-bold text-blue-600">{calculatedDistance} km</span>
                                         </div>
                                     </div>
                                 )}
