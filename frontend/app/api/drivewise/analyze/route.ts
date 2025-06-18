@@ -39,13 +39,20 @@ interface CarRecommendationResponse {
 // Dubai market prices (2024 estimates in AED)
 const DUBAI_PRICES = {
   car_rental_per_day: 120,
+  car_rental_4x4_per_day: 180, // 4x4 vehicles cost more to rent
   car_purchase_mid_range: 75000,
+  car_purchase_4x4: 110000, // 4x4 vehicles cost more to buy
   driver_per_day: 200,
+  driver_4x4_per_day: 250, // 4x4 driver service costs more
   fuel_per_day: 25,
+  fuel_4x4_per_day: 35, // 4x4 vehicles consume more fuel
   insurance_annual: 2500,
+  insurance_4x4_annual: 3500, // Higher insurance for 4x4
   registration_annual: 500,
   maintenance_annual: 3000,
+  maintenance_4x4_annual: 4500, // Higher maintenance for 4x4
   depreciation_rate_annual: 0.20,
+  depreciation_rate_4x4_annual: 0.22, // Slightly higher depreciation for 4x4
   salik_tolls_per_day: 8,
   parking_per_day: 15
 };
@@ -59,27 +66,30 @@ class DriveWiseAgent {
     });
   }
 
-  private calculateCosts(totalDays: number, distanceKm?: number, siteStayDays?: number) {
+  private calculateCosts(totalDays: number, distanceKm?: number, siteStayDays?: number, vehicleType?: string, requiresOffroad?: boolean) {
     const costs = {
-      rent: this.calculateRentCosts(totalDays, distanceKm, siteStayDays),
-      buy: this.calculateBuyCosts(totalDays, distanceKm, siteStayDays),
-      driver: this.calculateDriverCosts(totalDays, distanceKm, siteStayDays)
+      rent: this.calculateRentCosts(totalDays, distanceKm, siteStayDays, vehicleType),
+      buy: this.calculateBuyCosts(totalDays, distanceKm, siteStayDays, vehicleType),
+      driver: this.calculateDriverCosts(totalDays, distanceKm, siteStayDays, vehicleType)
     };
     return costs;
   }
 
-  private calculateRentCosts(totalDays: number, distanceKm?: number, siteStayDays?: number): CostBreakdown {
-    const dailyRental = DUBAI_PRICES.car_rental_per_day;
-    let dailyFuel = DUBAI_PRICES.fuel_per_day;
+  private calculateRentCosts(totalDays: number, distanceKm?: number, siteStayDays?: number, vehicleType?: string): CostBreakdown {
+    const is4x4 = vehicleType === '4x4';
+    const dailyRental = is4x4 ? DUBAI_PRICES.car_rental_4x4_per_day : DUBAI_PRICES.car_rental_per_day;
+    let dailyFuel = is4x4 ? DUBAI_PRICES.fuel_4x4_per_day : DUBAI_PRICES.fuel_per_day;
     const dailyTolls = DUBAI_PRICES.salik_tolls_per_day;
     const dailyParking = DUBAI_PRICES.parking_per_day;
     
     // Adjust fuel costs based on distance (if provided)
     if (distanceKm) {
-      // Assuming 12 km/l fuel efficiency and AED 2.5 per liter
-      const fuelCostPerKm = 2.5 / 12;
+      // 4x4 vehicles have lower fuel efficiency (8 km/l vs 12 km/l for normal cars)
+      const fuelEfficiency = is4x4 ? 8 : 12;
+      const fuelCostPerKm = 2.5 / fuelEfficiency;
       const roundTripFuel = distanceKm * 2 * fuelCostPerKm; // Round trip
-      dailyFuel = DUBAI_PRICES.fuel_per_day + (roundTripFuel / totalDays);
+      const baseFuel = is4x4 ? DUBAI_PRICES.fuel_4x4_per_day : DUBAI_PRICES.fuel_per_day;
+      dailyFuel = baseFuel + (roundTripFuel / totalDays);
     }
     
     // Add accommodation costs for site stays
@@ -101,12 +111,13 @@ class DriveWiseAgent {
     };
   }
 
-  private calculateBuyCosts(totalDays: number, distanceKm?: number, siteStayDays?: number): CostBreakdown {
-    const carPrice = DUBAI_PRICES.car_purchase_mid_range;
-    const annualInsurance = DUBAI_PRICES.insurance_annual;
+  private calculateBuyCosts(totalDays: number, distanceKm?: number, siteStayDays?: number, vehicleType?: string): CostBreakdown {
+    const is4x4 = vehicleType === '4x4';
+    const carPrice = is4x4 ? DUBAI_PRICES.car_purchase_4x4 : DUBAI_PRICES.car_purchase_mid_range;
+    const annualInsurance = is4x4 ? DUBAI_PRICES.insurance_4x4_annual : DUBAI_PRICES.insurance_annual;
     const annualRegistration = DUBAI_PRICES.registration_annual;
-    const annualMaintenance = DUBAI_PRICES.maintenance_annual;
-    const depreciationRate = DUBAI_PRICES.depreciation_rate_annual;
+    const annualMaintenance = is4x4 ? DUBAI_PRICES.maintenance_4x4_annual : DUBAI_PRICES.maintenance_annual;
+    const depreciationRate = is4x4 ? DUBAI_PRICES.depreciation_rate_4x4_annual : DUBAI_PRICES.depreciation_rate_annual;
     
     // Calculate proportional costs for the period
     const periodFactor = totalDays / 365;
@@ -115,13 +126,15 @@ class DriveWiseAgent {
     const periodMaintenance = annualMaintenance * periodFactor;
     const periodDepreciation = carPrice * depreciationRate * periodFactor;
     
-    let periodFuel = DUBAI_PRICES.fuel_per_day * totalDays;
+    let periodFuel = (is4x4 ? DUBAI_PRICES.fuel_4x4_per_day : DUBAI_PRICES.fuel_per_day) * totalDays;
     // Adjust fuel costs based on distance (if provided)
     if (distanceKm) {
-      // Assuming 12 km/l fuel efficiency and AED 2.5 per liter
-      const fuelCostPerKm = 2.5 / 12;
+      // 4x4 vehicles have lower fuel efficiency (8 km/l vs 12 km/l for normal cars)
+      const fuelEfficiency = is4x4 ? 8 : 12;
+      const fuelCostPerKm = 2.5 / fuelEfficiency;
       const roundTripFuel = distanceKm * 2 * fuelCostPerKm; // Round trip
-      const dailyFuelWithDistance = DUBAI_PRICES.fuel_per_day + (roundTripFuel / totalDays);
+      const baseFuel = is4x4 ? DUBAI_PRICES.fuel_4x4_per_day : DUBAI_PRICES.fuel_per_day;
+      const dailyFuelWithDistance = baseFuel + (roundTripFuel / totalDays);
       periodFuel = dailyFuelWithDistance * totalDays;
     }
     
@@ -153,8 +166,9 @@ class DriveWiseAgent {
     };
   }
 
-  private calculateDriverCosts(totalDays: number, distanceKm?: number, siteStayDays?: number): CostBreakdown {
-    const driverDaily = DUBAI_PRICES.driver_per_day;
+  private calculateDriverCosts(totalDays: number, distanceKm?: number, siteStayDays?: number, vehicleType?: string): CostBreakdown {
+    const is4x4 = vehicleType === '4x4';
+    const driverDaily = is4x4 ? DUBAI_PRICES.driver_4x4_per_day : DUBAI_PRICES.driver_per_day;
     
     // Add accommodation costs for site stays
     let accommodationCost = 0;
@@ -179,50 +193,58 @@ class DriveWiseAgent {
     return 'long_term';
   }
 
-  private generateRecommendations(totalDays: number, costs: any, distanceKm?: number, originOffice?: string): RecommendationOption[] {
+  private generateRecommendations(totalDays: number, costs: any, distanceKm?: number, originOffice?: string, vehicleType?: string, requiresOffroad?: boolean): RecommendationOption[] {
     const durationCategory = this.getDurationCategory(totalDays);
+    const is4x4 = vehicleType === '4x4';
     const recommendations: RecommendationOption[] = [];
 
     // RENT RECOMMENDATION
-    const rentPros = [
+    let rentPros = [
       "No upfront investment required",
       "Maintenance and insurance included",
       "Flexibility to change car models",
       "No depreciation concerns",
       "24/7 roadside assistance typically included"
     ];
-    const rentCons = [
+    let rentCons = [
       "Higher daily costs for long-term use",
       "No asset ownership",
       "Mileage restrictions may apply",
       "Availability issues during peak seasons"
     ];
 
+    // Add 4x4 specific considerations
+    if (is4x4) {
+      rentPros.push("Professional off-road capable vehicles available");
+      rentCons.push("Higher rental costs for 4x4 vehicles", "Limited 4x4 vehicle availability");
+    }
+
     let rentScore = 9.0;
     if (durationCategory === 'medium_term') rentScore = 7.0;
     if (durationCategory === 'long_term') rentScore = 4.0;
     
-    // Adjust score based on distance - rental cars good for long distances
+    // Adjust score based on distance and vehicle type
     if (distanceKm && distanceKm > 200) rentScore += 1.0;
-    if (originOffice === 'muscat') rentScore += 0.5; // Cross-border considerations
+    if (originOffice === 'muscat') rentScore += 0.5;
+    if (is4x4) rentScore += 1.5; // Rental companies handle 4x4 maintenance well
 
     recommendations.push({
       option_type: 'rent',
       cost_breakdown: costs.rent,
       pros: rentPros,
       cons: rentCons,
-      suitability_score: rentScore
+      suitability_score: Math.min(10, rentScore)
     });
 
     // BUY RECOMMENDATION
-    const buyPros = [
+    let buyPros = [
       "Asset ownership and potential resale value",
       "No daily rental fees",
       "Complete freedom and flexibility",
       "Customization options",
       "Long-term cost efficiency"
     ];
-    const buyCons = [
+    let buyCons = [
       "High upfront investment",
       "Depreciation in Dubai's harsh climate",
       "Maintenance and repair responsibilities",
@@ -230,58 +252,73 @@ class DriveWiseAgent {
       "Parking and storage requirements"
     ];
 
+    // Add 4x4 specific considerations
+    if (is4x4) {
+      buyPros.push("Ownership of specialized off-road vehicle", "Can handle Fujairah's rough terrain");
+      buyCons.push("Higher purchase and maintenance costs", "More complex 4x4 systems to maintain", "Higher insurance premiums");
+    }
+
     let buyScore = 2.0;
     if (durationCategory === 'medium_term') buyScore = 6.0;
     if (durationCategory === 'long_term') buyScore = 8.5;
     
-    // Buying less attractive for long distances due to wear and tear
+    // Adjust for vehicle type and conditions
     if (distanceKm && distanceKm > 200) buyScore -= 0.5;
-    if (originOffice === 'muscat') buyScore -= 1.0; // Cross-border complications
+    if (originOffice === 'muscat') buyScore -= 1.0;
+    if (is4x4 && requiresOffroad) buyScore -= 1.0; // Higher maintenance for off-road use
 
     recommendations.push({
       option_type: 'buy',
       cost_breakdown: costs.buy,
       pros: buyPros,
       cons: buyCons,
-      suitability_score: buyScore
+      suitability_score: Math.max(1, buyScore)
     });
 
     // DRIVER RECOMMENDATION
-    const driverPros = [
+    let driverPros = [
       "No driving stress in Dubai traffic",
       "Professional local knowledge",
       "Productivity during commute",
       "No parking concerns",
       "Safety and convenience"
     ];
-    const driverCons = [
+    let driverCons = [
       "Highest daily cost",
       "Less privacy and flexibility",
       "Dependency on driver availability",
       "Language barriers possible"
     ];
 
+    // Add 4x4 specific considerations
+    if (is4x4) {
+      driverPros.push("Experienced off-road driving", "Professional handling of rough terrain", "No personal risk on dangerous roads");
+      driverCons.push("Higher costs for 4x4 driver services", "Limited availability of 4x4 drivers");
+    }
+
     let driverScore = 7.5;
     if (durationCategory === 'medium_term') driverScore = 6.5;
     if (durationCategory === 'long_term') driverScore = 5.0;
     
-    // Driver service excellent for long distances and cross-border travel
+    // Driver service excellent for challenging conditions
     if (distanceKm && distanceKm > 200) driverScore += 1.5;
-    if (originOffice === 'muscat') driverScore += 2.0; // Professional handling of cross-border
+    if (originOffice === 'muscat') driverScore += 2.0;
+    if (is4x4 && requiresOffroad) driverScore += 2.0; // Professional off-road driving is valuable
 
     recommendations.push({
       option_type: 'driver',
       cost_breakdown: costs.driver,
       pros: driverPros,
       cons: driverCons,
-      suitability_score: driverScore
+      suitability_score: Math.min(10, driverScore)
     });
 
     return recommendations;
   }
 
-  async generateReasoning(totalDays: number, bestOption: RecommendationOption, costs: any, distanceKm?: number, originOffice?: string): Promise<string> {
+  async generateReasoning(totalDays: number, bestOption: RecommendationOption, costs: any, distanceKm?: number, originOffice?: string, vehicleType?: string, requiresOffroad?: boolean): Promise<string> {
     const distanceInfo = distanceKm ? `Distance from ${originOffice || 'origin'} to Fujairah: ${distanceKm}km` : '';
+    const vehicleInfo = vehicleType === '4x4' ? '4x4 vehicle required for off-road access to Fujairah site (5km rough terrain)' : 'Normal vehicle suitable for this route';
     
     const prompt = `You are a Dubai automotive consultant. Based on the analysis for ${totalDays} days, provide detailed reasoning for recommending ${bestOption.option_type}.
 
@@ -291,6 +328,7 @@ Cost comparison:
 - Driver: ${costs.driver.total_cost.toFixed(0)} AED (${costs.driver.daily_cost.toFixed(0)} AED/day)
 
 ${distanceInfo ? `Travel details: ${distanceInfo}` : ''}
+Vehicle requirement: ${vehicleInfo}
 
 Consider Dubai-specific factors:
 - Harsh climate affecting car depreciation
@@ -300,8 +338,10 @@ Consider Dubai-specific factors:
 - Fuel costs and maintenance
 ${distanceKm ? '- Long distance travel considerations and fuel efficiency' : ''}
 ${originOffice === 'muscat' ? '- Cross-border travel from Oman to UAE' : ''}
+${vehicleType === '4x4' ? '- Specialized 4x4 maintenance and insurance costs' : ''}
+${requiresOffroad ? '- Off-road driving safety and vehicle capability requirements' : ''}
 
-Provide clear, actionable advice in exactly 2 short sentences explaining why ${bestOption.option_type} is the best choice for this duration and distance.`;
+Provide clear, actionable advice in exactly 2 short sentences explaining why ${bestOption.option_type} is the best choice for this duration, distance, and vehicle requirement.`;
 
     try {
       const response = await this.openai.chat.completions.create({
@@ -309,7 +349,7 @@ Provide clear, actionable advice in exactly 2 short sentences explaining why ${b
         messages: [
           {
             role: "system",
-            content: "You are an expert Dubai automotive consultant with deep knowledge of local market conditions, costs, and practical considerations."
+            content: "You are an expert Dubai automotive consultant with deep knowledge of local market conditions, costs, and practical considerations including 4x4 vehicle requirements."
           },
           {
             role: "user",
@@ -320,10 +360,10 @@ Provide clear, actionable advice in exactly 2 short sentences explaining why ${b
         max_tokens: 150
       });
 
-      return response.choices[0]?.message?.content || "Analysis completed based on cost and duration factors.";
+      return response.choices[0]?.message?.content || "Analysis completed based on cost, duration, and vehicle requirement factors.";
     } catch (error) {
       console.error('Error generating reasoning:', error);
-      return `Based on the ${totalDays}-day analysis, ${bestOption.option_type} is recommended due to optimal cost-effectiveness and practical considerations for Dubai conditions.`;
+      return `Based on the ${totalDays}-day analysis requiring ${vehicleType || 'standard'} vehicle, ${bestOption.option_type} is recommended due to optimal cost-effectiveness and practical considerations for Dubai conditions.`;
     }
   }
 
@@ -331,13 +371,15 @@ Provide clear, actionable advice in exactly 2 short sentences explaining why ${b
     totalDays: number, 
     distanceKm?: number, 
     originOffice?: string, 
-    siteStayDays?: number
+    siteStayDays?: number,
+    vehicleType?: string,
+    requiresOffroad?: boolean
   ): Promise<CarRecommendationResponse> {
     // Calculate costs for all options (including distance considerations)
-    const costs = this.calculateCosts(totalDays, distanceKm, siteStayDays);
+    const costs = this.calculateCosts(totalDays, distanceKm, siteStayDays, vehicleType, requiresOffroad);
     
     // Generate recommendations
-    const recommendations = this.generateRecommendations(totalDays, costs, distanceKm, originOffice);
+    const recommendations = this.generateRecommendations(totalDays, costs, distanceKm, originOffice, vehicleType, requiresOffroad);
     
     // Find the best option
     const bestOption = recommendations.reduce((prev, current) => 
@@ -351,7 +393,7 @@ Provide clear, actionable advice in exactly 2 short sentences explaining why ${b
     const confidence = Math.min(0.95, (maxScore - secondMaxScore) / 10 + 0.6);
     
     // Generate AI reasoning
-    const reasoning = await this.generateReasoning(totalDays, bestOption, costs, distanceKm, originOffice);
+    const reasoning = await this.generateReasoning(totalDays, bestOption, costs, distanceKm, originOffice, vehicleType, requiresOffroad);
     
     return {
       recommended_option: bestOption.option_type,
@@ -370,7 +412,7 @@ Provide clear, actionable advice in exactly 2 short sentences explaining why ${b
 
 export async function POST(request: NextRequest) {
   try {
-    const { total_days, distance_km, origin_office, site_stay_days } = await request.json();
+    const { total_days, distance_km, origin_office, site_stay_days, vehicle_type, requires_offroad } = await request.json();
 
     // Validate input
     if (!total_days || total_days < 1) {
@@ -397,7 +439,7 @@ export async function POST(request: NextRequest) {
 
     // Create agent and analyze
     const agent = new DriveWiseAgent();
-    const result = await agent.analyze(total_days, distance_km, origin_office, site_stay_days);
+    const result = await agent.analyze(total_days, distance_km, origin_office, site_stay_days, vehicle_type, requires_offroad);
 
     return NextResponse.json(result);
   } catch (error) {

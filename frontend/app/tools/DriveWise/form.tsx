@@ -47,6 +47,8 @@ const formSchema = z.object({
     }).optional(),
     calculatedDistance: z.number().optional(),
     manualDistance: z.number().min(1).optional(),
+    vehicleType: z.enum(['4x4', 'normal']),
+    requiresOffroad: z.boolean(),
 })
 
 // Types for API response
@@ -103,6 +105,8 @@ export default function DriveWiseForm() {
     const [customOriginCoords, setCustomOriginCoords] = useState<{lat: number, lng: number} | null>(null);
     const [customDestinationCoords, setCustomDestinationCoords] = useState<{lat: number, lng: number} | null>(null);
     const [manualDistance, setManualDistance] = useState<number>(100);
+    const [vehicleType, setVehicleType] = useState<'4x4' | 'normal'>('4x4');
+    const [requiresOffroad, setRequiresOffroad] = useState<boolean>(true);
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -112,6 +116,8 @@ export default function DriveWiseForm() {
             originOffice: 'dubai',
             siteStayDays: 0,
             manualDistance: 100,
+            vehicleType: '4x4',
+            requiresOffroad: true,
         },
     });
 
@@ -193,6 +199,13 @@ export default function DriveWiseForm() {
         setDistanceCalculationMethod(method);
         form.setValue('distanceCalculationMethod', method);
         
+        // Determine vehicle requirements based on route
+        const { vehicleType: requiredVehicleType, requiresOffroad: offroad } = determineVehicleRequirement(method);
+        setVehicleType(requiredVehicleType);
+        setRequiresOffroad(offroad);
+        form.setValue('vehicleType', requiredVehicleType);
+        form.setValue('requiresOffroad', offroad);
+        
         if (method === 'office-to-site') {
             const distance = calculateOfficeToSiteDistance(originOffice);
             setCalculatedDistance(distance);
@@ -236,6 +249,17 @@ export default function DriveWiseForm() {
         }
     };
 
+    // Function to determine if 4x4 is required based on route
+    const determineVehicleRequirement = (method: 'office-to-site' | 'map-selection' | 'manual-distance'): { vehicleType: '4x4' | 'normal', requiresOffroad: boolean } => {
+        if (method === 'office-to-site') {
+            // Office to Fujairah requires 4x4 due to 5km off-road access
+            return { vehicleType: '4x4', requiresOffroad: true };
+        } else {
+            // Site-to-site or manual distance can use normal cars
+            return { vehicleType: 'normal', requiresOffroad: false };
+        }
+    };
+
     async function onSubmit(values: z.infer<typeof formSchema>) {
         setIsLoading(true);
         setError(null);
@@ -252,6 +276,8 @@ export default function DriveWiseForm() {
                 manual_distance: values.manualDistance,
                 custom_origin_coords: customOriginCoords,
                 custom_destination_coords: customDestinationCoords,
+                vehicle_type: values.vehicleType,
+                requires_offroad: values.requiresOffroad,
             };
 
             const response = await fetch('/api/drivewise/analyze', {
@@ -352,6 +378,9 @@ export default function DriveWiseForm() {
                                                 <div className="flex-1">
                                                     <div className="font-medium text-gray-800 mb-1 text-sm sm:text-base">🏢 Office to Fujairah Site</div>
                                                     <div className="text-xs sm:text-sm text-gray-600">Select from Muscat or Dubai office</div>
+                                                    <div className="mt-1 px-2 py-1 bg-orange-100 text-orange-700 text-xs rounded-full inline-block">
+                                                        🚙 4x4 Required (5km off-road)
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -375,6 +404,9 @@ export default function DriveWiseForm() {
                                                 <div className="flex-1">
                                                     <div className="font-medium text-gray-800 mb-1 text-sm sm:text-base">🗺️ Custom Map Selection</div>
                                                     <div className="text-xs sm:text-sm text-gray-600">Choose points on map</div>
+                                                    <div className="mt-1 px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full inline-block">
+                                                        🚗 Normal Cars OK
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -398,6 +430,9 @@ export default function DriveWiseForm() {
                                                 <div className="flex-1">
                                                     <div className="font-medium text-gray-800 mb-1 text-sm sm:text-base">📏 Manual Distance</div>
                                                     <div className="text-xs sm:text-sm text-gray-600">Enter distance manually</div>
+                                                    <div className="mt-1 px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full inline-block">
+                                                        🚗 Normal Cars OK
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -576,6 +611,29 @@ export default function DriveWiseForm() {
                                         </div>
                                     </div>
                                 )}
+
+                                {/* Vehicle Type Requirement Display */}
+                                <div className="mt-4 sm:mt-6 p-3 sm:p-4 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border-2 border-yellow-200">
+                                    <div className="flex flex-col sm:flex-row items-center justify-between space-y-2 sm:space-y-0">
+                                        <span className="text-base sm:text-lg font-semibold text-orange-800 flex items-center">
+                                            {vehicleType === '4x4' ? '🚙' : '🚗'} <span className="ml-2">Vehicle Requirement:</span>
+                                        </span>
+                                        <div className="flex items-center space-x-2">
+                                            <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                                                vehicleType === '4x4' 
+                                                    ? 'bg-orange-100 text-orange-700' 
+                                                    : 'bg-green-100 text-green-700'
+                                            }`}>
+                                                {vehicleType === '4x4' ? '4x4 Vehicle Required' : 'Normal Car Suitable'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    {requiresOffroad && (
+                                        <div className="mt-2 text-xs sm:text-sm text-orange-700 bg-orange-100 p-2 rounded-lg">
+                                            ⚠️ <strong>Off-road Access:</strong> Fujairah site requires 5km off-road driving through rough terrain. 4x4 vehicles are mandatory for safety and accessibility.
+                                        </div>
+                                    )}
+                                </div>
                             </div>
 
                             {/* Duration Selection Section */}
@@ -722,7 +780,19 @@ export default function DriveWiseForm() {
                                             </div>
                                         </div>
 
-
+                                        {/* Vehicle Type */}
+                                        <div className="bg-white/70 rounded-lg p-3 border border-purple-100">
+                                            <div className="font-medium text-gray-700 mb-1">
+                                                {vehicleType === '4x4' ? '🚙' : '🚗'} Vehicle Type
+                                            </div>
+                                            <div className={`text-xs font-medium px-2 py-1 rounded-full inline-block ${
+                                                vehicleType === '4x4' 
+                                                    ? 'bg-orange-100 text-orange-700' 
+                                                    : 'bg-green-100 text-green-700'
+                                            }`}>
+                                                {vehicleType === '4x4' ? '4x4 Required' : 'Normal Car OK'}
+                                            </div>
+                                        </div>
 
                                         {/* Total Days */}
                                         <div className="bg-white/70 rounded-lg p-3 border border-purple-100 sm:col-span-2 lg:col-span-1">
